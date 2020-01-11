@@ -1,0 +1,232 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">  
+  
+<html>  
+<head>  
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">  
+    <title>Statistics</title>  
+    <link type="text/css" rel="stylesheet" href="../css/pagestyle.css"/>  
+    <script type="text/javascript" src="../js/jquery.min.js"></script>  
+    <script language="javascript" type="text/javascript" src="../js/excanvas.js"></script>  
+      
+    <script language="javascript" type="text/javascript" src="../js/jquery.jqplot.min.js"></script>  
+    <script type="text/javascript" src="../js/jqplot.dateAxisRenderer.min.js"></script>  
+    <link rel="stylesheet" type="text/css" hrf="../css/jquery.jqplot.min.css" />  
+      
+    <script type="text/javascript">  
+          
+        var drawline = function(obj,areaid,tt){  
+          //var line1=[['2008-08-12 4:00PM',4], ['2008-09-12 4:00PM',6.5], ['2008-10-12 4:00PM',5.7], ['2008-11-12 4:00PM',9], ['2008-12-12 4:00PM',8.2]];  
+          var line1 = obj;  
+          var plot1 = $.jqplot(areaid, [line1], {  
+            title:tt,  
+            axes:{  
+                xaxis:{  
+                    renderer:$.jqplot.DateAxisRenderer,  
+                    tickOptions:{formatString:'%Y/%#m/%#d'}  
+                }  
+            },  
+            series:[{lineWidth:4, markerOptions:{style:'square'}}]  
+            });  
+        }  
+          
+          
+        var getData  = function(sql,a1,line){  
+            //查询数据  
+        //  var a = new Array(3);  
+        //  a[0] = new Array(1,2,3);  
+        //  a[1] = new Array(3,4,5);   
+          
+            var filefolder = location.href.substring(0, location.href.indexOf("statistics.html"));                
+            var dbpath = filefolder.substring(8) + "../db/oilcar.mdb" ; //去掉 "file:///"  ,路径有效                
+                 
+            var con = new ActiveXObject("ADODB.Connection"),  
+                fso = new ActiveXObject("Scripting.FileSystemObject"),                              //①  
+                connstr = "Provider=Microsoft.Jet.OLEDB.4.0;Data Source=" + fso.GetFile(dbpath); // ① 这种写法有效  
+            con.Open(connstr);  //①  
+            var rs = new ActiveXObject("ADODB.Recordset");                            
+            rs.open(sql,con);                 
+              
+            while(!rs.eof){  
+                var theday = rs.Fields.item("date_jiayou").value;  
+                var carnum =rs.Fields.item("carnumber").value;          //号牌                      
+                var miles = rs.Fields.item("totalmileage").value;       //总里程，整数  
+                var oilleft = rs.Fields.item("oilboxpercent").value;      
+                var price = rs.Fields.item("per_price").value;      //价格，实数  
+                var oiltype = rs.Fields.item("oiltype").value;  //类型  
+                var quantity = rs.Fields.item("quantity").value;    //量，实数  
+                var fee = rs.Fields.item("pay").value;  //总费用，实数  
+                var seller = rs.Fields.item("seller").value; //商家  
+                var place = rs.Fields.item("location").value;   //地点  
+                var remark = rs.Fields.item("remark").value;    //备注     
+                palce = (place=="")?"":place;  
+                remark = (remark=="")?"":remark;                  
+                var d = new Date(Date.parse(theday));  
+                var y,m,day;  
+                y = d.getFullYear();  
+                m = d.getMonth()+1 ;  
+                dday = d.getDate();  
+                theday = y +"/" + m +  "/" + day;  
+                oilleft = Number(oilleft).toFixed(4);       //剩余百分比，小数    
+                  
+                a1[line] = new Array();  
+                a1[line][0] = Date.parse(theday);  
+                a1[line][1] = new Number(oilleft);//这里必须new对象，否则还会传递原对象，导致本函数被调用处(111行)提示“对象不再有效”  
+                a1[line][2] = new Number(miles);//这里必须new对象，否则还会传递原对象，导致本函数被调用处(111行)提示“对象不再有效”  
+                a1[line][3] = new Number(price);//这里必须new对象，否则还会传递原对象，导致本函数被调用处(111行)提示“对象不再有效”  
+                a1[line][4] = new Number(quantity);//这里必须new对象，否则还会传递原对象，导致本函数被调用处(111行)提示“对象不再有效”  
+                //a1[line] = new Array(theday,oilleft,miles,price,quantity);  
+                //alert(a1[line]);        
+                line++;  
+                  
+                              
+                rs.moveNext;  
+            }                             
+              
+              
+              
+            rs.close();    
+　           rs = null;   
+            con.Close();  
+            con = null;      
+              
+        //  alert(a1[0]);  
+            return a1;  
+        }  
+          
+          
+        var getPrices = function(sql,a2,line){        
+          
+            var filefolder = location.href.substring(0, location.href.indexOf("statistics.html"));                
+            var dbpath = filefolder.substring(8) + "../db/oilcar.mdb" ; //去掉 "file:///"  ,路径有效                
+                 
+            var con = new ActiveXObject("ADODB.Connection"),  
+                fso = new ActiveXObject("Scripting.FileSystemObject"),                              //①  
+                connstr = "Provider=Microsoft.Jet.OLEDB.4.0;Data Source=" + fso.GetFile(dbpath); // ① 这种写法有效  
+            con.Open(connstr);  //①  
+            var rs = new ActiveXObject("ADODB.Recordset");                            
+            rs.open(sql,con);                 
+              
+            while(!rs.eof){  
+                var theday = rs.Fields("date_jiayou");  
+                var carnum =rs.Fields("carnumber");         //号牌                      
+                var miles = rs.Fields("totalmileage");      //总里程，整数  
+                var oilleft = rs.Fields("oilboxpercent");     
+                var price = rs.Fields("per_price");     //价格，实数  
+                var oiltype = rs.Fields("oiltype"); //类型  
+                var quantity = rs.Fields("quantity");   //量，实数  
+                var fee = rs.Fields("pay"); //总费用，实数  
+                var seller = rs.Fields("seller"); //商家  
+                var place = rs.Fields("location");  //地点  
+                var remark = rs.Fields("remark");   //备注     
+                palce = (place=="")?"":place;  
+                remark = (remark=="")?"":remark;                  
+                var d = new Date(Date.parse(theday));  
+                var y,m,day;  
+                y = d.getFullYear();  
+                m = d.getMonth()+1 ;  
+                dday = d.getDate();  
+                theday = y +"/" + m +  "/" + day;  
+                oilleft = Number(oilleft).toFixed(4);       //剩余百分比，小数    
+                  
+                a2[line] = new Array();  
+                a2[line][0] = new Date(Date.parse(theday));               
+                a2[line][1] = new Number(price);//这里必须new对象，否则还会传递原对象，导致本函数被调用处(111行)提示“对象不再有效”                       
+                line++;                                   
+                rs.moveNext;  
+            }                             
+                          
+            rs.close();    
+　           rs = null;   
+            con.Close();  
+            con = null;           
+            return a2;  
+        }  
+      
+        $(function(){  
+              
+              
+              
+             $("#st").click(function(){  
+                 var a1 = new Array();  
+                 var line = 0;  
+                 $("#dv_1").html("");  
+                 var y =   Number($("#t1").val());//需要验证....  
+                 var d1 = y+"/"+ 1 + "/"+1;  
+                 var d2 = (y+1)+"/"+ 1+ "/"+1;  
+                 //alert(d2);  
+                 var sql = "select * from oilcarlog where date_jiayou>=#"+ d1+"# and  date_jiayou<#"+ d2 +"# order by date_jiayou asc ";  
+                 //var arr = getData(sql);  
+                 var obj =  getData(sql,a1,line);//二维数组 : /日期 /油剩余百分比 /里程 /单价 /加油量  
+                //alert(obj[1]);  
+                  
+                var bar_x = new Array(), bar_y = new Array() ;//x:日期  y:油耗  
+                  
+                for(i=1;i<obj.length;i++){  
+                    var cur_oilleft = obj[i][1];//当前行剩油百分比  
+                    var oil_spent = 0 ;//油耗，指到上一次或前面某次加油时所加的油之和  
+                    var cur_miles = obj[i][2] ; //当前行里程  
+                    var miles_travel = 0 ;  
+                    var haspoint_calc = false;  
+                    for(j=i-1;j>=0;j--){  
+                        //剩油百分比小于等于1/16时，近似算作这次与计算行（待计算日）剩油百分比相同，以便累计待计算的总油耗：前几次到当前日期(当前日期不含)所加油量之和  
+                        var percent = cur_oilleft - obj[j][1];  
+                        oil_spent += obj[j][4];  
+                        miles_travel = cur_miles - obj[j][2];  
+                        if( percent <=  0.0625  ){                             
+                            //找到可计算日期  
+                            haspoint_calc = true;  
+                            break;  
+                        }                         
+                    }  
+                    if(haspoint_calc){  
+                        var d = new Date(obj[i][0]);          
+                    //  var year = d.getFullYear() , month = d.getMonth + 1;  
+                                          
+                        var date_calc = new String(d.getFullYear() + "/" +  String(new Number(d.getMonth()) + 1) + "/" + new String(d.getDate()));  
+                        var oil = new Number(100*oil_spent/miles_travel);//百公里油耗 升/百公里  
+                        bar_x.push( date_calc );  
+                        bar_y.push( oil.toFixed(2) );   
+                    }  
+                }  
+                var obj = new Array();  
+                for(k=0;k<bar_x.length;k++){  
+                    obj[k] = new Array(String(bar_x[k]),Number(bar_y[k]));  
+                }  
+  
+                drawline(obj,'dv_1','汽车油耗统计(升/百公里)');  
+            });  
+              
+            $("#oil").click(function(){  
+                var a2 = new Array();  
+                var line = 0;  
+                $("#dv_1").html("");  
+                var y =   Number($("#t1").val());//需要验证....  
+                var d1 = y+"/"+ 1 + "/"+1;  
+                var d2 = (y+1)+"/"+ 1+ "/"+1;                  
+                var sql = "select * from oilcarlog where date_jiayou>=#"+ d1+"# and  date_jiayou<#"+ d2 +"# order by date_jiayou asc ";  
+                var obj =  getPrices(sql,a2,line);//二维数组 : /日期  /单价               
+                drawline(obj,'dv_1','汽油单价浮动');   
+            });  
+      
+        });  
+    </script>  
+      
+</head>  
+  
+<body>  
+<div  style="height: 99%;">  
+<div style="height: 10%;">  
+    <label style="font-size: 13px;   font-style: normal; font-weight: bold;">统计年份:</label>  
+    <input type="text" id="t1" name="theday" value="2015" /><span style="font-size: 10px">(如：2015)</span>  
+    <input  type="button" value="统计"  class="btn_statistics" id="st" />|<input  type="button" value="油价浮动"  class="btn_statistics" id="oil" />  
+</div>  
+<div style="height: 90%;">  
+<fieldset style="font-size: 14px; color:blue; width: 90%; height:90% ">  
+<legend>查询图表</legend>  
+    <div id="dv_1" style="width:600px; height:350px; margin-top:20px; margin-left:20px;">   
+    </div>  
+</fieldset>  
+</div>  
+</div>  
+</body>  
+</html>  
